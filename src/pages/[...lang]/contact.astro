@@ -4,6 +4,7 @@ import Base from "@/layouts/Base.astro";
 import { getListPage } from "@/lib/contentParser.astro";
 import { getTranslations, supportedLang } from "@/lib/utils/languageParser";
 import PageHeader from "@/partials/PageHeader.astro";
+import { Icon } from "astro-icon/components";
 import { type ContentEntryMap } from "astro:content";
 
 export function getStaticPaths() {
@@ -25,13 +26,23 @@ if (contactIndex[0].data.draft) {
 const { contact_form_action }: { contact_form_action: string } = config.params;
 const { title, description, meta_title, image } = contactIndex[0].data;
 
-const {
-  working_mail,
-  full_name,
-  anything_else,
-  contact_message_placeholder,
-  submit,
-} = await getTranslations(lang as keyof ContentEntryMap);
+const contactMethods = [
+  {
+    category: "Professional",
+    items: [
+      { name: "Email", icon: "ph:mailbox", content: "chenxu_wu@qq.com", link: "mailto:chenxu_wu@qq.com" },
+      { name: "GitHub", icon: "devicon:github", content: "https://github.com/cxwu28", link: "https://github.com/cxwu28" },
+      { name: "LinkedIn", icon: "devicon:linkedin", content: "linkedin.com/in/yourname", link: "https://linkedin.com/in/yourname" }
+    ]
+  },
+  {
+    category: "Social & Media",
+    items: [
+      // { name: "Zhihu", icon: "devicon:zhihu", content: "知乎个人主页", link: "https://zhihu.com/people/yourid" },
+      { name: "WeChat", icon: "wechat", content: "ID: zsws2018", link: "#" }
+    ]
+  }
+];
 ---
 
 <Base
@@ -43,49 +54,43 @@ const {
   <PageHeader title={title} />
   <section class="section-sm">
     <div class="container">
-      <div class="row">
-        <div class="mx-auto md:col-10 lg:col-6">
-          <form action={contact_form_action} method="POST">
-            <div class="mb-6">
-              <label for="name" class="form-label">
-                {full_name}
-                <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="name"
-                name="name"
-                class="form-input"
-                placeholder="John Doe"
-                type="text"
-              />
-            </div>
-            <div class="mb-6">
-              <label for="email" class="form-label">
-                {working_mail}
-                <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="email"
-                name="email"
-                class="form-input"
-                placeholder="john.doe@email.com"
-                type="email"
-              />
-            </div>
-            <div class="mb-6">
-              <label for="message" class="form-label">
-                {anything_else}
-                <span class="text-red-500">*</span>
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                class="form-input"
-                placeholder={contact_message_placeholder}
-                rows="8"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">{submit}</button>
-          </form>
+      <div class="row justify-center">
+        <div class="md:col-10 lg:col-12">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {contactMethods.map((group) => (
+              <div class="bg-theme-light dark:bg-darkmode-theme-light p-8 rounded-xl shadow-sm">
+                <h3 class="h5 mb-6 border-b border-border dark:border-darkmode-border pb-2">
+                  {group.category}
+                </h3>
+                <ul class="space-y-6">
+                  {group.items.map((item) => (
+                    <li class="flex items-start">
+                      <div class="mr-4 mt-1 text-primary">
+                        <Icon name={item.icon} class="w-10 h-10" />
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-bold uppercase tracking-wider text-text dark:text-darkmode-text opacity-60">
+                          {item.name}
+                        </h4>
+                        <a 
+                          href={item.link} 
+                          target={item.link.startsWith('http') ? "_blank" : "_self"}
+                          class="text-lg font-medium hover:text-primary transition-colors break-all"
+                        >
+                          {item.content}
+                        </a>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* 底部一句话简介 */}
+          <div class="mt-12 text-center opacity-70">
+            <p>I'm always open to interesting collaborations or academic discussions.</p>
+          </div>
         </div>
       </div>
     </div>

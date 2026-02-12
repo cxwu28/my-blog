@@ -25,18 +25,8 @@ if (menu) {
       <div class="mb-8 text-center lg:col-3 lg:mb-0 lg:text-left">
         <Logo />
       </div>
-      <div class="mb-8 text-center lg:col-6 lg:mb-0">
-        <ul>
-          {
-            footer.map((menu: any) => (
-              <li class="m-3 inline-block">
-                <a href={slugSelector(menu.url, lang)}>{menu.name}</a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-      <div class="mb-8 text-center lg:col-3 lg:mb-0 lg:mt-0 lg:text-right">
+
+      <div class="mb-8 text-center lg:col-9 lg:mb-0 lg:mt-0 lg:text-right">
         <Social source={social.main} className="social-icons" />
       </div>
     </div>

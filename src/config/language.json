@@ -1,14 +1,14 @@
 [
   {
+    "languageName": "中文",
+    "languageCode": "zh-cn",
+    "contentDir": "cn",
+    "weight": 2
+  },
+  {
     "languageName": "En",
     "languageCode": "en",
     "contentDir": "english",
     "weight": 1
-  },
-  {
-    "languageName": "Fr",
-    "languageCode": "fr",
-    "contentDir": "french",
-    "weight": 2
   }
 ]

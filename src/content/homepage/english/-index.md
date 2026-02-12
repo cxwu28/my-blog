@@ -1,53 +1,51 @@
 ---
 # Banner
 banner:
-  title: "The Ultimate Starter Template You Need To Start Your Astro Project"
-  content: "Astroplate is a free starter template built with Astro and TailwindCSS, providing everything you need to jumpstart your Astro project and save valuable time."
+  title: "Hi, I'm Chenxu Wu"
+  content: "Math & CS Major at Technion | Data Analyst | Peer Tutor | Transforming complex problems into actionable solutions"
   image: "/images/banner.png"
   button:
     enable: true
-    label: "Fork Deploy and Edit Online 🚀"
-    link: "https://app.sitepins.com/new/clone?name=Astroplate&repository=https://github.com/zeon-studio/astroplate/tree/multilingual"
+    label: "View My Works 🚀"
+    link: "https://github.com/cxwu28"
 
 # Features
 features:
-  - title: "What's Included in Astroplate"
+  - title: "Academic Foundation"
     image: "/images/service-1.png"
-    content: "Astroplate is a comprehensive starter template that includes everything you need to get started with your Astro project. What's Included in Astroplate"
+    content: "Strong interdisciplinary background combining rigorous mathematics with practical computer science skills. Dual expertise in quantitative modeling and algorithmic thinking."
     bulletpoints:
-      - "10+ Pre-build pages"
-      - "95+ Google Pagespeed Score"
-      - "Build with Astro and TailwindCSS for easy and customizable styling"
-      - "Fully responsive on all devices"
-      - "SEO-optimized for better search engine rankings"
-      - "**Open-source and free** for personal and commercial use"
-    button:
-      enable: false
-      label: "Get Started Now"
-      link: "#"
-
-  - title: "Discover the Key Features Of Astro"
-    image: "/images/service-2.png"
-    content: "Astro is an all-in-one web framework for building fast, content-focused websites. It offers a range of exciting features for developers and website creators. Some of the key features are:"
-    bulletpoints:
-      - "Zero JS, by default: No JavaScript runtime overhead to slow you down."
-      - "Customizable: Tailwind, MDX, and 100+ other integrations to choose from."
-      - "UI-agnostic: Supports React, Preact, Svelte, Vue, Solid, Lit and more."
+      - "Mathematics: Algebra, Calculus, Set Theory, Differential Equations, Probability Theory, Combinatorics, Group Theory"
+      - "Computer Science: Systems Programming, Data Structures, Combinatorial Algorithms, Digital Systems"
+      - "Honors: Chancellor's Scholarship (2024), Freshman Entrance Scholarship (2022)"
+      - "Focus: Transform mathematical theories into financial insights"
     button:
       enable: true
-      label: "Get Started Now"
-      link: "https://github.com/zeon-studio/astroplate"
+      label: "View Education"
+      link: "https://www.gtiit.edu.cn/viewColleges.aspx?flowNo=1087"
 
-  - title: "The Top Reasons to Choose Astro for Your Next Project"
-    image: "/images/service-3.png"
-    content: "With Astro, you can build modern and content-focused websites without sacrificing performance or ease of use."
+  - title: "Technical Skills"
+    image: "/images/service-2.png"
+    content: "Proficient in data processing, algorithm optimization, and quantitative analysis. Combining programming skills with mathematical rigor for efficient problem-solving."
     bulletpoints:
-      - "Instantly load static sites for better user experience and SEO."
-      - "Intuitive syntax and support for popular frameworks make learning and using Astro a breeze."
-      - "Use any front-end library or framework, or build custom components, for any project size."
-      - "Built on cutting-edge technology to keep your projects up-to-date with the latest web standards."
+      - "Programming: Python (Pandas/NumPy), Java, C, ASM x86-64"
+      - "Data Analysis: Large dataset processing, automated analysis, Excel advanced functions and charts"
+      - "Algorithm Design: Enhance efficiency via combinatorial logic and data structure"
+      - "Tools: VS code, CSS, HTML, Cloudflare, Astro, Office, Excel advanced functions"
     button:
-      enable: false
-      label: ""
-      link: ""
+      enable: true
+      label: "See Skills"
+      link: "./en/about/#skills"
+
+  - title: "Practical Experience"
+    image: "/images/service-3.png"
+    content: "Hands-on experience in financial data analysis and academic leadership. Proven ability to deliver results in both professional and educational settings."
+    bulletpoints:
+      - "Asset Management Intern: Processed large datasets using Python for automated analysis."
+      - "Research: Collected historical data for financial reports and weekly fund performance reports."
+      - "Team Leadership: Led 13 freshmen with 46% pass rate (30% department average)."
+    button:
+      enable: true
+      label: "View experience"
+      link: "./en/about/#experience"
 ---

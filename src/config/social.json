@@ -1,24 +1,24 @@
 {
   "main": [
     {
-      "name": "facebook",
-      "icon": "FaFacebook",
-      "link": "https://www.facebook.com/"
-    },
-    {
-      "name": "x",
-      "icon": "FaXTwitter",
-      "link": "https://x.com/"
-    },
-    {
       "name": "github",
-      "icon": "FaGithub",
-      "link": "https://www.github.com/"
+      "icon": "devicon:github",
+      "link": "https://github.com/cxwu28"
     },
     {
       "name": "linkedin",
-      "icon": "FaLinkedin",
-      "link": "https://www.linkedin.com/"
+      "icon": "devicon:linkedin",
+      "link": "https://www.linkedin.com/in/%E5%AE%B8%E6%97%AD-%E5%90%B4-b6648a3b0/"
+    },
+    {
+      "name": "QQ",
+      "icon": "devicon:git",
+      "link": "https://www.qq.com/"
+    },
+    {
+      "name": "WeChat",
+      "icon": "devicon:git",
+      "link": "https://www.wechat.com/"
     }
   ]
 }

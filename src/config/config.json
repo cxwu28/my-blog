@@ -1,26 +1,26 @@
 {
   "site": {
-    "title": "Astroplate",
-    "base_url": "https://astroplate-multilang.netlify.app",
+    "title": "Chenxu",
+    "base_url": "https://wu.chenxu.works.dev",
     "base_path": "/",
     "trailing_slash": false,
-    "favicon": "/images/favicon.png",
-    "logo": "/images/logo.png",
-    "logo_darkmode": "/images/logo-darkmode.png",
-    "logo_width": "150",
-    "logo_height": "30",
-    "logo_text": "Astroplate"
+    "favicon": "/images/CX-favicon.png",
+    "logo": "/images/CX-logo.png",
+    "logo_darkmode": "/images/CX-logo-dark.png",
+    "logo_width": "100",
+    "logo_height": "100",
+    "logo_text": "Chenxu"
   },
 
   "settings": {
-    "search": true,
+    "search": false,
     "sticky_header": true,
     "theme_switcher": true,
     "default_theme": "system",
-    "pagination": 2,
-    "summary_length": 200,
+    "pagination": 4,
+    "summary_length": 100,
     "blog_folder": "blog",
-    "default_language": "en",
+    "default_language": "zh-cn",
     "disable_languages": [],
     "default_language_in_subdir": false
   },
@@ -32,7 +32,7 @@
 
   "params": {
     "contact_form_action": "#",
-    "copyright": "Designed And Developed by [Zeon Studio](https://zeon.studio)"
+    "copyright": "Designed And Developed by [Astro](https://astroplate-multilang.netlify.app/)"
   },
 
   "navigation_button": {
@@ -56,5 +56,10 @@
     "meta_author": "zeon.studio",
     "meta_image": "/images/og-image.png",
     "meta_description": "astro and tailwind boilerplate"
-  }
+  },
+
+  "social_media": [
+    { "name": "GitHub", "icon": "devicon:github", "link": "https://github.com/你的账号" },
+    { "name": "LinkedIn", "icon": "devicon:linkedin", "link": "https://linkedin.com/in/你的账号" }
+  ]
 }

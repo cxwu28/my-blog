@@ -20,7 +20,7 @@
   @apply inline-block;
 }
 .social-icons li a {
-  @apply flex h-9 w-9 items-center justify-center rounded-sm bg-primary text-center leading-9 text-white dark:bg-darkmode-primary dark:text-text-dark;
+  @apply flex items-center justify-center rounded-sm text-center leading-9 text-white dark:bg-darkmode-primary dark:text-text-dark;
 }
 .social-icons li a svg {
   @apply h-5 w-5;
@@ -168,4 +168,9 @@
   @apply prose-th:relative prose-th:z-10 prose-th:px-4 prose-th:py-[18px] prose-th:text-text-dark dark:prose-th:text-darkmode-text;
   @apply prose-tr:border-border dark:prose-tr:border-darkmode-border;
   @apply prose-td:relative prose-td:z-10 prose-td:px-3 prose-td:py-[18px] dark:prose-td:text-darkmode-text;
+}
+
+.skills
+{
+  @apply text-center justify-center text-2xl;
 }
