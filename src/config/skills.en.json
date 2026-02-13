@@ -1,0 +1,113 @@
+[
+  {
+    "catalog": "Programming Language",
+    "skills": [
+      {
+        "name": "Python",
+        "icon": "devicon:python"
+      },{
+        "name": "Java",
+        "icon": "devicon:java"
+      },
+      {
+        "name": "C",
+        "icon": "devicon:c"
+      },
+      {
+        "name": "Astro",
+        "icon": "devicon:astro"
+      },
+      {
+        "name": "HTML",
+        "icon": "devicon:html5"
+      },
+      {
+        "name": "CSS",
+        "icon": "devicon:css3"
+      }
+    ]
+  },
+  {
+    "catalog": "Tools",
+    "skills": [
+
+      {
+        "name": "VSCode",
+        "icon": "devicon:vscode"
+      },
+      {
+        "name": "pyCharm",
+        "icon": "devicon:pycharm"
+      },
+      {
+        "name": "Jupyter Notebook",
+        "icon": "devicon:jupyter-wordmark"
+      },
+      {
+        "name": "Anaconda",
+        "icon": "devicon:anaconda"
+      },
+      {
+        "name": "github",
+        "icon": "devicon:github"
+      },
+      {
+        "name": "Kaggle",
+        "icon": "devicon:kaggle-wordmark"
+      },
+      {
+        "name": "Huggingface",
+        "icon": "devicon:huggingface"
+      },
+      {
+        "name": "Leetcode",
+        "icon": "devicon:leetcode"
+      },
+      {
+        "name": "git",
+        "icon": "devicon:git"
+      },
+      {
+        "name": "npm",
+        "icon": "devicon:npm"
+      },
+      {
+        "name": "pypi",
+        "icon": "devicon:pypi"
+      },
+      {
+        "name": "CloudFlare",
+        "icon": "devicon:cloudflare"
+      }
+    ]
+  },
+  {
+    "catalog": "Libraries & Frameworks",
+    "skills": [
+      {
+        "name": "NumPy",
+        "icon": "devicon:numpy"
+      },
+      {
+        "name": "Pandas",
+        "icon": "devicon:pandas"
+      },
+      {
+        "name": "Matplotlib",
+        "icon": "devicon:matplotlib"
+      },
+      {
+        "name": "pyTorch",
+        "icon": "devicon:pytorch"
+      },
+      {
+        "name": "Markdown",
+        "icon": "devicon:markdown"
+      },
+      {
+        "name": "Latex",
+        "icon": "devicon:latex"
+      }
+    ]
+  }
+]

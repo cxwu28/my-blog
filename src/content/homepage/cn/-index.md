@@ -29,9 +29,9 @@ features:
     content: "精通数据处理、算法优化与定量分析。将编程技能与数学严谨性结合，实现高效问题解决。"
     bulletpoints:
       - "编程：Python（Pandas/NumPy）、Java、C、ASM x86-64"
-      - "数据分析：大型数据集处理、自动化分析、Excel高级函数与图表"
+      - "数据分析：大型数据集处理、自动化分析、matplotlib与图表"
       - "算法设计：通过组合逻辑与数据结构提升效率"
-      - "工具：VS Code、CSS、HTML、Cloudflare、Astro、Office、Excel高级函数"
+      - "工具：VS Code、Jupyter、Anaconda、npm、git、Cloudflare、Astro"
     button:
       enable: true
       label: "查看技能"

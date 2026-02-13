@@ -12,5 +12,9 @@
   "contact_message_placeholder": "Your message here...",
   "page_not_found_content": "The page you are looking for may have been removed, renamed, or is temporarily unavailable.",
   "back_to_home": "Back to Home",
-  "get_started": "Get Started"
+  "get_started": "Get Started",
+  "source": "Source",
+  "related_posts": "Related Posts",
+  "tags": "Tags",
+  "share": "Share"
 }

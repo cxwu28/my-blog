@@ -12,5 +12,9 @@
   "contact_message_placeholder": "Votre message ici...",
   "page_not_found_content": "La page que vous recherchez a peut-être été supprimée, changée de nom ou temporairement inaccessible.",
   "back_to_home": "Retour à l'accueil",
-  "get_started": "Commencez à utiliser"
+  "get_started": "Commencez à utiliser",
+  "source": "来源",
+  "related_posts": "相关文章",
+  "tags": "标签",
+  "share": "分享"
 }

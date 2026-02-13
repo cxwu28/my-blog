@@ -7,6 +7,7 @@ draft: false
 ---
 
 import { Icon } from 'astro-icon/components'
+import Skill from "@/components/Skill.astro";
 
 <section id="top">
 
@@ -33,13 +34,15 @@ import { Icon } from 'astro-icon/components'
 ### 02. 数据工程 (Data & Engineering)
 - **自动化主义：** 精通 Python (Pandas/NumPy)，主张“消除一切重复劳动”。
 - **工程化落地：** 擅长将一次性脚本重构为**可复用、模块化**的分析流水线（Data Pipeline）。
-- **工具协同：** 深度使用 Excel 进行财务建模与交互式可视化，确保分析结果的决策易读性。
+- **工具协同：** 深度使用 matplotlib 进行财务建模与交互式可视化，确保分析结果的决策易读性。
 
 ### 03. 底层逻辑 (Algorithms & Systems)
 - **算法设计：** 关注 $O(n)$ 复杂度、内存对齐与边界条件，追求代码的健壮性。
 - **底层洞察：** 具备 x86-64 汇编背景，理解程序执行的微观机制，从底层视角优化计算瓶颈。
 
 </section>
+
+<Skill/>
 
 ---
 
@@ -51,7 +54,7 @@ import { Icon } from 'astro-icon/components'
 
 1.  **问题结构化 (Decomposition)** 将模糊场景拆解为清晰的变量、约束条件与目标函数。
 2.  **模型设计 (Modeling)** 选择最优数学路径，赋予问题“可计算性”。
-3.  **工程实现 (Implementation)** 使用 Python/Excel 快速构建原型并实现自动化验证。
+3.  **工程实现 (Implementation)** 使用 Python(matplotlib) 快速构建原型并实现自动化验证。
 4.  **迭代校准 (Refinement)** 基于偏差分析反馈模型，优化假设，提升预测或分析精度。
 
 </section>
@@ -85,5 +88,3 @@ import { Icon } from 'astro-icon/components'
 </section>
 
 ---
-
-**"Explicit is better than implicit. Simple is better than complex."** *—— The Zen of Python*

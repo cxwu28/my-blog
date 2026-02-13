@@ -29,9 +29,9 @@ features:
     content: "Proficient in data processing, algorithm optimization, and quantitative analysis. Combining programming skills with mathematical rigor for efficient problem-solving."
     bulletpoints:
       - "Programming: Python (Pandas/NumPy), Java, C, ASM x86-64"
-      - "Data Analysis: Large dataset processing, automated analysis, Excel advanced functions and charts"
+      - "Data Analysis: Large dataset processing, automated analysis, matplotlib and charts"
       - "Algorithm Design: Enhance efficiency via combinatorial logic and data structure"
-      - "Tools: VS code, CSS, HTML, Cloudflare, Astro, Office, Excel advanced functions"
+      - "Tools: VS Code、Jupyter、Anaconda、npm、git、Cloudflare、Astro"
     button:
       enable: true
       label: "See Skills"

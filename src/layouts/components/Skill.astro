@@ -1,0 +1,40 @@
+---
+const { source } = Astro.props;
+import { Icon } from 'astro-icon/components';
+import {
+  getLangFromUrl,
+  getTranslations,
+  slugSelector,
+} from "@/lib/utils/skillLanguageParser";
+import type { ContentEntryMap } from "astro:content";
+
+export interface ISkills {
+  catalog: string;
+  skills: ISkill[];
+}
+export interface ISkill {
+  name: string;
+  icon: string;
+}
+
+const lang = getLangFromUrl(Astro.url);
+const skillConfig:ISkills[] = await getTranslations(lang as keyof ContentEntryMap, "skills");
+---
+
+<>
+  {skillConfig.map((sc: ISkills) => (
+    <div>
+      <h3 class="h4 mb-4">{sc.catalog}</h3>
+      <ul>
+        {sc.skills.map((skill: ISkill) => (
+          <li class="inline-block m-2 text-center">
+            <span class="hover-zoom">
+              <Icon name={skill.icon} class="w-18 h-18" />
+              <span>{skill.name}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))}
+</>

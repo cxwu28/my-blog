@@ -3,12 +3,12 @@
     "languageName": "中文",
     "languageCode": "zh-cn",
     "contentDir": "cn",
-    "weight": 2
+    "weight": 1
   },
   {
-    "languageName": "En",
+    "languageName": "Enlish",
     "languageCode": "en",
     "contentDir": "english",
-    "weight": 1
+    "weight": 2
   }
 ]

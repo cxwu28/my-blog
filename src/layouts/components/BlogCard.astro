@@ -14,10 +14,10 @@ import ImageMod from "./ImageMod.astro";
 const { summary_length }: { summary_length: number; blog_folder: string } =
   config.settings;
 const { data } = Astro.props;
-const { title, image, date, author, categories } = data.data;
+const { title, image, date, source, categories } = data.data;
 
 const lang = getLangFromUrl(Astro.url);
-const { read_more } = await getTranslations(lang as keyof ContentEntryMap);
+const { read_more, source: sourceLabel } = await getTranslations(lang as keyof ContentEntryMap);
 
 const slugParts = data.id.split("/");
 slugParts[0] = "blog";
@@ -44,12 +44,21 @@ data.id = modifiedSlug;
     </a>
   </h4>
   <ul class="mb-4">
-    <li class="mr-4 inline-block">
-      <a href={slugSelector(`/authors/${slugify(author)}`, lang)}>
-        <FaRegUserCircle className={"mr-2 -mt-1 inline-block"} />
-        {humanize(author)}
-      </a>
-    </li>
+    {
+      source && (
+        <li class="mr-4 inline-block">
+          <a
+            href={source.url}
+            target={source.type === "external" ? "_blank" : "_self"}
+            rel={source.type === "external" ? "noopener noreferrer" : undefined}
+            class="hover:underline"
+          >
+            <FaRegUserCircle className={"mr-2 -mt-1 inline-block"} />
+            {sourceLabel}: {source.name}
+          </a>
+        </li>
+      )
+    }
 
     <li class="mr-4 inline-block">
       <FaRegFolder className={"mr-2 -mt-1 inline-block"} />
