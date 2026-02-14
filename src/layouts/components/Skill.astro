@@ -28,8 +28,8 @@ const skillConfig:ISkills[] = await getTranslations(lang as keyof ContentEntryMa
       <ul>
         {sc.skills.map((skill: ISkill) => (
           <li class="inline-block m-2 text-center">
-            <span class="hover-zoom">
-              <Icon name={skill.icon} class="w-18 h-18" />
+            <span>
+              <Icon name={skill.icon} class="w-18 h-18 hover-zoom" />
               <span>{skill.name}</span>
             </span>
           </li>

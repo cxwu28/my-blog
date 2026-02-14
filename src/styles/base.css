@@ -57,3 +57,12 @@ code {
 blockquote > p {
   @apply my-0!;
 }
+
+.hover-zoom {
+  @apply transition-transform duration-200 ease-out hover:scale-[1.05];
+}
+
+a
+{
+   @apply inline-block transition-transform duration-200 ease-out hover:scale-[1.05];
+}
