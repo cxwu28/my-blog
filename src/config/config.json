@@ -56,10 +56,5 @@
     "meta_author": "zeon.studio",
     "meta_image": "/images/og-image.png",
     "meta_description": "astro and tailwind boilerplate"
-  },
-
-  "social_media": [
-    { "name": "GitHub", "icon": "devicon:github", "link": "https://github.com/你的账号" },
-    { "name": "LinkedIn", "icon": "devicon:linkedin", "link": "https://linkedin.com/in/你的账号" }
-  ]
+  }
 }
