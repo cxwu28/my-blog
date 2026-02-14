@@ -38,7 +38,7 @@ if (disabledLanguages.includes(lang)) {
       <>
         <ImageMod
           src={src ? src : logo}
-          class={`inline-block ${theme_switcher && "dark:hidden"}`}
+          class={`inline-block bg-transparent ${theme_switcher && "dark:hidden"}`}
           width={logo_width.replace("px", "") * 2}
           height={logo_height.replace("px", "") * 2}
           alt={title}

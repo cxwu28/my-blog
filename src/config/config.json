@@ -32,13 +32,13 @@
 
   "params": {
     "contact_form_action": "#",
-    "copyright": "Designed And Developed by [Astro](https://astroplate-multilang.netlify.app/)"
+    "copyright": "Designed And Developed by Astro and Cloudflare"
   },
 
   "navigation_button": {
     "enable": true,
     "label": "Github",
-    "link": "https://github.com/zeon-studio/astroplate/tree/multilingual"
+    "link": "https://github.com/cxwu28/astroplate/tree/cxwu"
   },
 
   "google_tag_manager": {
