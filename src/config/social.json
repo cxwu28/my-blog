@@ -6,19 +6,14 @@
       "link": "https://github.com/cxwu28"
     },
     {
+      "name": "CSDN",
+      "icon": "/images/csdn.svg",
+      "link": "https://blog.csdn.net/weixin_74813317?spm=1000.2115.3001.5343"
+    },
+    {
       "name": "linkedin",
       "icon": "devicon:linkedin",
       "link": "https://www.linkedin.com/in/%E5%AE%B8%E6%97%AD-%E5%90%B4-b6648a3b0/"
-    },
-    {
-      "name": "QQ",
-      "icon": "devicon:git",
-      "link": "https://www.qq.com/"
-    },
-    {
-      "name": "WeChat",
-      "icon": "devicon:git",
-      "link": "https://www.wechat.com/"
     }
   ]
 }

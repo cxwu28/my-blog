@@ -21,38 +21,55 @@ const { lang } = Astro.params;
 const homepage = await getListPage("homepage", lang as keyof ContentEntryMap);
 const { banner, features } = homepage[0].data;
 
-const testimonial = await getSinglePage(
-  "testimonialSection",
-  lang as keyof ContentEntryMap,
-  "testimonial"
-);
+// const testimonial = await getSinglePage(
+//   "testimonialSection",
+//   lang as keyof ContentEntryMap,
+//   "testimonial"
+// );
 
-const call_to_action = await getSinglePage(
-  "ctaSection",
-  lang as keyof ContentEntryMap,
-  "call-to-action"
-);
+// const call_to_action = await getSinglePage(
+//   "ctaSection",
+//   lang as keyof ContentEntryMap,
+//   "call-to-action"
+// );
 ---
 
 <Base>
   <!-- Banner -->
-  <section class="section pt-14">
+  <section class="section pt-20 pb-16">
     <div class="container">
-      <div class="row justify-center">
-        <div class="lg:col-7 md:col-9 mb-8 text-center">
+      <div class="flex flex-col md:flex-row items-center justify-center gap-12 lg:gap-20 max-w-6xl mx-auto">
+        
+        <div class="flex-1 text-left order-2 md:order-1">
           <h1
             set:html={markdownify(banner.title)}
-            class="mb-4 text-h3 lg:text-h1"
+            class="mb-6 text-h3 lg:text-h1 font-bold leading-tight"
           />
-          <p set:html={markdownify(banner.content)} class="mb-8" />
+          
+          <div class="mb-8 text-lg lg:text-xl leading-loose">
+            {banner.content.split('<br />').map((line: string) => (
+              <span class="block mb-2" set:html={markdownify(line)} />
+            ))}
+          </div>
+
+          <div class="flex flex-wrap gap-3 mb-12">
+            <span class="inline-flex items-center px-3 py-1.5 bg-transparent border-2 border-blue-500 text-blue-600 dark:text-blue-400 rounded-md text-sm font-bold">
+              🎓 Math-CS Double Major
+            </span>
+            <span class="inline-flex items-center px-3 py-1.5 bg-transparent border-2 border-green-500 text-green-600 dark:text-green-400 rounded-md text-sm font-bold">
+              📈 Quant Intern: Automation
+            </span>
+            <span class="inline-flex items-center px-3 py-1.5 bg-transparent border-2 border-orange-500 text-orange-600 dark:text-orange-400 rounded-md text-sm font-bold">
+              👥 Tutor: 46% Pass (vs. 30% Avg.)
+            </span>
+          </div>
+          
           {
             banner.button.enable && (
               <a
-                class="btn btn-primary"
+                class="btn btn-primary px-10 py-4 text-lg shadow-xl"
                 href={banner.button.link}
-                target={
-                  banner.button.link.startsWith("http") ? "_blank" : "_self"
-                }
+                target={banner.button.link.startsWith("http") ? "_blank" : "_self"}
                 rel="noopener"
               >
                 {banner.button.label}
@@ -60,16 +77,21 @@ const call_to_action = await getSinglePage(
             )
           }
         </div>
+
         {
           banner.image && (
-            <div class="col-12">
-              <ImageMod
-                src={banner.image}
-                height={380}
-                width={1200}
-                alt="banner"
-                format="webp"
-              />
+            <div class="md:flex-none order-1 md:order-2">
+              <div class="relative w-[300px] lg:w-[420px]">
+                <div class="absolute -inset-4 bg-primary/5 rounded-full blur-3xl -z-10"></div>
+                <ImageMod
+                  src={banner.image}
+                  height={420} 
+                  width={420}
+                  alt="banner"
+                  format="webp"
+                  class="w-full h-auto object-contain" 
+                />
+              </div>
             </div>
           )
         }
@@ -119,6 +141,6 @@ const call_to_action = await getSinglePage(
   }
   <!-- /Features -->
 
-  <Testimonial testimonial={testimonial[0]} />
-  <CallToAction call_to_action={call_to_action[0]} />
+  <!-- <Testimonial testimonial={testimonial[0]} />
+  <CallToAction call_to_action={call_to_action[0]} /> -->
 </Base>
