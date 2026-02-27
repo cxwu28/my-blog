@@ -20,7 +20,18 @@ export interface ISocial {
           rel="noopener noreferrer nofollow"
         >
           <span class="sr-only">{social.name}</span>
-          <Icon name={social.icon} class="w-24 h-24"/>
+          {/* <Icon name={social.icon} class="w-24 h-24"/> */}
+          {/* 核心逻辑：判断是否为本地路径 */}
+          {social.icon.startsWith("/") ? (
+            <img 
+              src={social.icon} 
+              alt={social.name} 
+              class="w-24 h-24 inline-block" 
+              style="filter: grayscale(1) brightness(0.8);" 
+            />
+          ) : (
+            <Icon name={social.icon} class="w-24 h-24"/>
+          )}
           {/* <DynamicIcon className="inline-block" icon={social.icon} /> */}
         </a>
       </li>
