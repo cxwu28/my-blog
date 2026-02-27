@@ -1,0 +1,477 @@
+---
+title: "计算机系统：x86-64 算术运算与控制流 - 从 leaq 到条件跳转的底层逻辑"
+meta_title: "x86-64 Arithmetic"
+description: "深入剖析 x86-64 架构下的算术逻辑指令（lea, mul, div）及控制流机制（标志位、条件跳转），构建系统级编程的底层视角。"
+date: 2026-02-28T10:00:00Z
+image: "/images/Computer_Organization/CO.png"
+categories: ["Computing Systems"]
+tags: ["x86-64", "ASM", "Memory Management", "CSAPP"]
+sourceName: "Blog"
+sourceUrl: "./"
+draft: false
+---
+
+基于 x86-64 架构，本文将从算术逻辑指令的执行机制出发，深入解析 `leaq` 这种既能寻址又能进行高效算术优化的特殊指令。文章系统梳理了整数运算指令簇（涵盖 128 位乘除法的特殊寄存器逻辑），并详解条件码（Condition Codes）如何捕捉运算副作用，最终通过 `set` 与 `jump` 指令族展示底层控制流的实现逻辑。
+
+---
+
+## 一、加载有效地址
+
+
+### 1.1 lea/leaq
+
+- 基本计算公式：
+  - leaq Imm(Rb, Ri, S), %rax
+  - %rax = $ Imm+Rb+Ri \times S $
+- `mov` 用于访问寄存器地址，`leaq`则是直接取寄存器地址
+  - leaq (%rbx, %rcx), %rax （ # %rax = %rbx + %rcx is a address, not access address）
+  - movq (%rbx, %rcx), %rax  # %rax = M[%rbx + %rcx], （access address）
+- 例子
+    ```asm
+    # if M[0x111]=5 
+    movq $0x110, %rbx
+    movq $0x1, %rcx
+    movq (%rbx, %rcx), %rax # %rax=5
+    leaq (%rbx, %rcx), %rax # %rax=0x111
+    # if don't know M[0x111]=?
+    movq $0x110, %rbx
+    movq $0x1, %rcx
+    movq (%rbx, %rcx), %rax # %rax if definite but unknown
+    ```
+
+### 1.2 `leaq`指令展示：
+设`%rbx=b`，`%rdx=d`
+| 指令 | 效果 |
+|:---|:---|
+| leaq 9(%rdx), %rax | %rax = 9+d |
+| leaq (%rdx, %rbx), %rax | %rax = d+b |
+| leaq (%rdx, %rbx, 3), %rax | %rax = d+3b |
+| leaq 2(%rbx, %rbx, 7), %rax | %rax = 2+8b |
+| leaq 0xE(, %rdx, 3), %rax | %rax = 14+3d |
+| leaq 6(%rbx, %rdx, 7), %rax | %rax = 6+b+7d |
+
+### 1.3 示例
+
+```c
+long scale(long x, long y, long z){
+    long t = x + 4 * y + 12 * z;
+    return t;
+}
+```
+
+```asm
+# x in %rdi, y in %rsi, z in %rdx 
+scale:
+    leaq (%rdi, %rsi, 4), %rax  # %rax = x + 4*y
+    leaq (%rdx, %rdx, 2), %rdx  # %rdx = 3*z
+    leaq (%rax, %rdx, 4), %rax  # %rax = x + 4*y + 12*z
+```
+
+---
+
+## 二、整数运算
+
+### 2.1 常用算术与逻辑指令概览
+
+在 x86-64 中，算术与逻辑运算指令通常分为一元操作和二元操作。一个核心规则是：二元操作的两个操作数不能同时为内存地址。
+
+| 指令 | 效果 | 描述 |
+|:---|:---|:---|
+| `leaq S` | D←&S | 加载有效地址 (Load Effective Address) |
+| `INC D` | D←D+1 | 自增 (Increment) |
+| `DEC D` | D←D−1 | 自减 (Decrement) |
+| `NEG D` | D←−D | 取负 (Negate) |
+| `NOT D` | D←∼D | 取反/补码 (Complement) |
+| `ADD S, D` | D←D+S | 加法 (Add) |
+| `SUB S, D` | D←D−S | 减法 (Subtract) |
+| `IMUL S, D` | D←D×S | 整数乘法 (Multiply) |
+| `XOR S, D` | D←D⊕S | 异或 (Exclusive-OR) |
+| `OR S, D` | D←D∣S | 或 (Or) |
+| `AND S, D` | D←D & S | 与 (And) |
+
+### 2.2 示例：ASM$ \leftrightarrow $C
+#### 2.2.1
+```c
+long arith(long x, long y, long z)
+{
+    long t1 = x ^ y
+    long t2 = z * 48
+    long t3 = t1 & 0x0F0F0F0F
+    long t4 = t2 - t3
+    return t4
+}
+```
+```asm
+# x in %rdi, y in %rsi, z in %rdx
+
+arith:
+    xorq %rsi, %rdi  # t1 = x ^ y
+    leaq $48, %rdx, %rax  # t2 = z * 48
+    andq $252645135, %rdi  # t3 = t1 & 0x0F0F0F0F
+    subq %rdi, %rax # t4 = t2 - t3
+    ret
+```
+#### 2.2.2
+```asm
+x in %rdi, y in %rsi, z in %rdx
+
+arith:
+    orq %rsi, %rdx
+    sarq $9, %rdx
+    notq %rdx
+    movq %rdx, %rax
+    subq %rsi, %rax
+    ret
+```
+```c
+short arith(short x, short y, short z)
+{
+    short p1 = y | z;
+    short p2 = p1 >> 9;
+    short p3 = ~p2;
+    short p4 = p3 - y;
+    return p4;
+}
+```
+
+---
+
+### 三、特殊算术操作
+
+### 3.1 概述
+
+在 x86-64 中，全乘法和除法涉及到两个 64 位寄存器 `%rdx` 和 `%rax` 的配合，形成一个 128 位的数值区域。
+
+| 指令 | 效果 (Effect) | 描述 |
+| :--- | :--- | :--- |
+| `imulq S` | $R[\%rdx]:R[\%rax] \leftarrow S \times R[\%rax]$ | 有符号全乘法 (Signed full multiply) |
+| `mulq S` | $R[\%rdx]:R[\%rax] \leftarrow S \times R[\%rax]$ | 无符号全乘法 (Unsigned full multiply) |
+| `cqto` | $R[\%rdx]:R[\%rax] \leftarrow SignExtend(R[\%rax])$ | 转换为八字 (Convert to oct word) |
+| `idivq S` | $R[\%rdx] \leftarrow \text{mod}, R[\%rax] \leftarrow \text{div}$ | 有符号除法 (Signed divide) |
+| `divq S` | $R[\%rdx] \leftarrow \text{mod}, R[\%rax] \leftarrow \text{div}$ | 无符号除法 (Unsigned divide) |
+
+### 3.2 示例
+
+#### 3.2.1 乘法
+
+```c
+void store_uprod(uint128_t *dest, uint128_t x, uint128_t y)
+{
+    *dest = x * (uint128_t) y;
+}
+```
+
+```asm
+# dest in %rdi, x in %rsi, y in %rdx
+
+store_uprod:
+    movq %rsi, %rax  # copy x
+    mulq %rdx  # %rdx:%rax = y*x
+    movq %rax, (%rdi)
+    movq %rdx, 8(%rdi)
+    ret
+```
+
+#### 3.2.2 除法
+
+```c
+void rediv(long x, long y, long *qp, long *rp)
+{
+    long q = x/y
+    long r = x%y;
+    *qp = q;
+    *rp = r;
+}
+```
+
+```asm
+# x in %rdi, y in %rsi, qp in %rdx, rp in %rcx
+
+rediv:
+    movq %rdx, %r8  # copy qp
+    movq %rdi, %rax  # move x to lower 8 bytes
+    cqto  # sign-extend to upper 8 bytes
+    idivq %rsi  # divide by y, %rdx = %rdx:%rax mod y(r), %rax = %rdx:%rax / y(q)
+    movq %rax, (%r8)  # *qp = q
+    movq %rdx, (%rcx)  # *rp = r
+```
+
+> `idivq` 前用 `cpto`
+`divq` 前，手动`movq $0, %rdx`
+
+---
+
+## 四、控制流
+
+### 4.1 状态码 (flag)
+
+CPU 维护着一组单个比特位的状态码寄存器，描述了最近一次算术或逻辑操作的属性。这些标志位是所有分支判断的物理基础。
+
+| 标志位 | 全称 | 描述 (Description) | 示例 (Example) |
+| :--- | :--- | :--- | :--- |
+| **CF** | Carry Flag | **进位标志**：无符号数溢出（最高位产生进位/借位）。 | `1111 + 0001` $\rightarrow$ `CF=1` |
+| **ZF** | Zero Flag | **零标志**：最近的操作结果是否为 0。 | `subq %rax, %rax` $\rightarrow$ `ZF=1` |
+| **SF** | Sign Flag | **符号标志**：最近的操作结果为负数（最高位为 1）。 | `subq $10, $5` $\rightarrow$ `SF=1` |
+| **OF** | Overflow Flag | **溢出标志**：有符号数发生补码溢出（正+正=负）。 | `p+p=n` $\rightarrow$ `OF=1` |
+
+### 4.2 比较与测试指令 (CMP & TEST)
+
+这两条指令仅更新标志位，而不改变寄存器中的原始数据。
+
+| 指令 | 基于运算 | 描述 |
+| :--- | :--- | :--- |
+| **`cmpq S1, S2`** | $S2 - S1$ | 比较：行为与 `subq` 类似但只设标志位。 |
+| **`testq S1, S2`** | $S1 \ \& \ S2$ | 测试：行为与 `andq` 类似但只设标志位。 |
+
+### 4.3 SET 指令族
+
+`set` 指令根据标志位的逻辑组合，将目标操作数（低 8 位寄存器）设为 0 或 1。
+
+| 指令 | 效果 (Effect) | 描述 (Description) |
+| :--- | :--- | :--- |
+| `sete D` | $D \leftarrow ZF$ | equal / zero |
+| `setne D` | $D \leftarrow \sim\!ZF$ | not equal / not zero |
+| `sets D` | $D \leftarrow SF$ | negative |
+| `setns D` | $D \leftarrow \sim\!SF$ | nonnegative |
+| `setg D` | $D \leftarrow \sim\!(SF \oplus OF) \ \& \ \sim\!ZF$ | signed $>$ |
+| `setge D` | $D \leftarrow \sim\!(SF \oplus OF)$ | signed $\ge$ |
+| `setl D` | $D \leftarrow SF \oplus OF$ | signed $<$ |
+| `setle D` | $D \leftarrow (SF \oplus OF) \mid ZF$ | signed $\le$ |
+| `seta D` | $D \leftarrow \sim\!CF \ \& \ \sim\!ZF$ | unsigned $>$ |
+| `setae D` | $D \leftarrow \sim\!CF$ | unsigned $\ge$ |
+| `setb D` | $D \leftarrow CF$ | unsigned $<$ |
+| `setbe D` | $D \leftarrow CF \mid ZF$ | unsigned $\le$ |
+
+### 4.4 跳转指令
+
+跳转指令根据条件码的状态，改变程序的执行路径（即修改 `%rip` 的值）。
+
+| 指令 | 跳转条件 (Jump Condition) | 描述 (Description) |
+| :--- | :--- | :--- |
+| `jmp Label` | $1$ | direct jump |
+| `jmp *Operand` | $1$ | indirect jump |
+| `je Label` | $ZF$ | equal / zero |
+| `jne Label` | $\sim\!ZF$ | not equal / not zero |
+| `js Label` | $SF$ | negative |
+| `jns Label` | $\sim\!SF$ | nonnegative |
+| `jg Label` | $\sim\!(SF \oplus OF) \ \& \ \sim\!ZF$ | signed $>$ |
+| `jge Label` | $\sim\!(SF \oplus OF)$ | signed $\ge$ |
+| `jl Label` | $SF \oplus OF$ | signed $<$ |
+| `jle Label` | $(SF \oplus OF) \mid ZF$ | signed $\le$ |
+| `ja Label` | $\sim\!CF \ \& \ \sim\!ZF$ | unsigned $>$ |
+| `jae Label` | $\sim\!CF$ | unsigned $\ge$ |
+| `jb Label` | $CF$ | unsigned $<$ |
+| `jbe Label` | $CF \mid ZF$ | unsigned $\le$ |
+
+### 4.5 例子
+
+```c
+int comp(a, b)
+```
+```asm
+a in %rdi, b in %rsi
+
+comp:
+    cmpq %rsi, %rdi  # c=%rdi-%rsi(a-b)
+    setl %al  # if c<0(a<b), %al=1
+    movzbl %al, %eax
+    ret
+```
+
+---
+
+## 五、示例
+
+### 5.1 C 语言到汇编：数组遍历与状态码提取
+
+C 源码：判断数组中是否存在负数
+```c
+int negative_exists(int elems[], int N) {
+    int res = 0;
+    for (int i = 0; i < N; i++) {
+        res |= (elems[i] < 0);
+    }
+    return res;
+}
+```
+假设 elems 基址在 %rdi，N 在 %esi
+```asm
+negative_exists: 
+    # 初始化
+    movl $0, %eax           # %eax 作为 res = 0
+    movl $0, %ecx           # %ecx 作为循环变量 i = 0
+    cmpl %esi, %ecx         # 比较 i 和 N
+    jge .L3                 # 如果 i >= N，直接跳到结束 (循环入口守卫)
+
+.L1: # 循环体
+    movl (%rdi, %rcx, 4), %edx # 核心寻址： %edx = M[%rdi + i*4] (即 elems[i])
+    testl %edx, %edx        # 测试 elems[i] 的自身状态
+    sets %dl                # 如果结果为负 (SF=1)，则 %dl = 1
+    movzbl %dl, %edx        # 零扩展，将单字节 %dl 扩展为 32 位 %edx
+    orl %edx, %eax          # res |= (elems[i] < 0)
+
+.L2: # 循环更新 
+    incl %ecx               # i++
+    cmpl %esi, %ecx         # 再次比较 i 和 N
+    jl .L1                  # 如果 i < N，跳回循环体继续
+
+.L3:
+    ret                     # 返回 res (%eax)
+```
+
+### 5.2 逆向工程：从汇编还原分支逻辑
+
+假设 A 在 `%rdi`，B 在 `%rsi`，N 在 `%edx`
+
+```asm
+foo:
+    pushq %rbp
+    movq %rsp, %rbp
+    movl $0, %eax           # a = 0
+    movl $0, %ecx           # i = 0
+    cmpl $0, %edx
+    jle .L4                 # if N <= 0, goto end
+
+.L1:
+    movl (%rdi, %rcx, 4), %r8d  # %r8d = A[i]
+    movl (%rsi, %rcx, 4), %r9d  # %r9d = B[i]
+    cmpl %r9d, %r8d             # 比较 A[i] 和 B[i]
+    jg .L2                      # 如果 A[i] > B[i] (有符号大于)，跳转到 .L2
+    addl %r9d, %eax             # 否则 (A[i] <= B[i])：a = a + B[i]
+    jmp .L3                     # 跳过 .L2，直接进入循环更新段
+
+.L2:
+    addl %r8d, %eax             # a = a + A[i]
+
+.L3:
+    incl %ecx                   # i++
+    cmpl %edx, %ecx
+    jl .L1                      # if i < N, continue loop
+
+.L4:
+    popq %rbp
+    ret                         # return a
+```
+
+还原后的 C 源码：
+这段汇编实际上实现了一个逻辑：遍历两个数组，每次循环把较大的那个元素累加到总和中。
+
+```c
+int foo(int *A, int *B, int N){
+    int a = 0;
+    for (int i = 0; i < N; i++) {
+        if (A[i] > B[i]) {
+            a = a + A[i];
+        } else {
+            a = a + B[i];
+        }
+    }
+    return a;
+}
+```
+
+### 5.3 movq 与 leaq 的级联效应
+leaq 算地址，movq 拿数据。
+请观察以下四段代码，哪一段能纯粹利用算术运算实现 %rax = 15 * %rax？
+
+片段 a：双重访存
+```asm
+movq (%rax, %rax, 4), %rax  # %rax = M[5 * %rax]
+movq (%rax, %rax, 2), %rax  # %rax = M[3 * M[5 * %rax]]
+```
+片段 b：先访存后算术
+```asm
+movq (%rax, %rax, 4), %rax  # %rax = M[5 * %rax]
+leaq (%rax, %rax, 2), %rax  # %rax = 3 * M[5 * %rax]
+```
+片段 c：先算术后访存
+```asm
+leaq (%rax, %rax, 4), %rax  # %rax = 5 * %rax
+movq (%rax, %rax, 2), %rax  # %rax = M[3 * (5 * %rax)] = M[15 * %rax]
+```
+片段 d：纯算术累加
+```asm
+leaq (%rax, %rax, 4), %rax  # %rax = 5 * %rax
+leaq (%rax, %rax, 2), %rax  # %rax = 3 * (5 * %rax) = 15 * %rax
+```
+答案解析：
+只有 片段 d 满足条件。它通过两次 leaq 的级联，完全没有触碰内存，仅利用 ALU 完成了乘法操作，这也是编译器在优化常数乘法时极其常用的技巧。
+
+### 5.4 结构体与指针：内存偏移
+
+在汇编层面，结构体（Struct）的边界和字段名都会消失。编译器会根据数据类型的大小，为每个字段计算出一个固定的**内存偏移量（Offset）**。通过分析汇编代码中的数字，我们能精准反推 C 语言的结构体布局。
+
+**C 结构体布局映射：**
+```c
+struct data {          // 总大小: 28 字节 (暂不考虑末尾对齐填充)
+    long id;           // 偏移量: 0  (占用 8 字节)
+    char surname[16];  // 偏移量: 8  (占用 16 字节)
+    int age;           // 偏移量: 24 (占用 4 字节)
+};
+
+struct node {
+    struct data d;     // 偏移量: 0  (占用 28 字节)
+    struct node *next; // 偏移量: 28 (占用 8 字节)
+};
+```
+
+**C 源码定义：**
+```c
+short func_A(struct node *ptr) { 
+    return ptr->d.id + 1; // 访问起始成员并执行加法
+}
+int *func_B(struct node *ptr) { 
+    ptr = ptr->next;
+    return &(ptr->d.age); // 链表跳转后返回成员地址
+}
+char func_C(struct node *ptr) { 
+    return ptr->d.name[9]; // 访问特定字节偏移
+}
+int *func_D(struct node *ptr) { 
+    return ptr->d.age + ptr->next->d.age; // 跨节点成员组合运算
+}
+char *func_E(struct node *ptr) { 
+    return &ptr->d.name[16]; // 利用地址计算获取数组边界指针
+}
+```
+
+**ASM 对应函数：**
+```asm
+func_A:
+    movq (%rdi), %rax    # 获取 ptr->d.id (Offset 0)，使用 q 后缀处理 long
+    addq $1, %rax        # 执行加法运算
+    ret
+
+func_B:
+    movq 28(%rdi), %rdi  # 关键跳转：ptr = ptr->next (加载偏移 28 处的指针)
+    leaq 24(%rdi), %rax  # 计算地址：返回当前节点偏移 24 处的 age 地址 (不访存)
+    ret
+
+func_C:
+    movq 8(%rdi), %rax   # 访问偏移 8 处的数据起始点
+    movq 9(%rax), %rax   # 进行二级偏移量寻址
+    movb (%rax), %al     # 提取单字节结果 (1-byte)
+    ret
+
+func_D:
+    movl 24(%rdi), %eax    # 读取当前节点的 age (Offset 24)，l 后缀对应 int
+    movq 28(%rdi), %rcx    # 加载下一个节点的指针 (Offset 28)
+    addl 24(%rcx), %eax    # 累加下一节点偏移 24 处的 age 字段
+    ret
+
+func_E:
+    leaq 24(%rdi), %rax    # surname[0] 是 Offset 8，加上索引 16 即偏移 24
+    ret                    # 使用 leaq 直接返回物理地址计算结果
+```
+
+---
+
+## 参考资源
+
+- 《Computer Organization》课程笔记
+- 《深入理解计算机系统》（CS:APP）第 3 章
+- Intel 64 and IA-32 Architectures Software Developer's Manual
+
+---
+
+*本文最后更新于：2026-02-28*
