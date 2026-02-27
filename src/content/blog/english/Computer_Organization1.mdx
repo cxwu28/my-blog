@@ -1,0 +1,363 @@
+---
+title: "Computer Systems: Main Memory and x86-64 Data Movement Instructions"
+meta_title: ""
+description: "An analysis of main memory structure, data formats, and core assembly instructions such as mov/push/pop under the x86-64 architecture"
+date: 2026-02-26T20:00:00Z
+image: "/images/image-placeholder.png"
+categories: ["Computing Systems"]
+tags: ["x86-64", "ASM", "Memory Management"]
+sourceName: "Blog"
+sourceUrl: "./"
+draft: false
+---
+
+Based on the x86-64 architecture, this article starts from the matrix structure of main memory and explores the x86-64 addressing mechanism and memory architecture in depth, systematically organizing the underlying logic of hardware-software interaction, and explaining the mov instruction family and stack operations in detail.
+
+---
+
+## I. Physical Implementation of Main Memory and Addressing
+
+### 1.1 Matrix-Based Storage Structure
+
+Modern main memory is implemented using a **matrix structure**, rather than a simple linear arrangement. The core motivation behind this design is to avoid the physical wiring challenges caused by “extremely long memory address lines.”
+
+> **Core Idea**: Map a one-dimensional address into a two-dimensional physical space through row and column decoding, significantly reducing the complexity of address decoding circuits.
+
+### 1.2 Memory Model in x86-64
+
+In the x86-64 architecture, the memory system has the following key characteristics:
+
+| Feature | Description |
+|----------|--------------|
+| **Address Space** | Theoretically supports $2^{64}$ distinct memory addresses |
+| **Address Length** | Each memory address requires 64 bits in binary representation |
+| **Addressing Granularity** | Each address points to a **single byte (1 byte = 8 bits)** |
+| **Byte Order** | Little-Endian |
+
+> Although the architecture supports a $2^{64}$ address space, actual implementations typically use only 48 bits (256 TB) to avoid excessively large page tables.
+
+---
+
+## II. Data Formats and mov Instruction Rules
+
+<img 
+  src="/images/Computer_Organization/data_type.png" 
+  alt="x86-64 Data Types" 
+  className="w-full max-w-2xl mx-auto rounded-lg shadow-md my-8" 
+/>
+
+x86-64 assembly instructions use a **single-character suffix** to explicitly indicate the operand size. This is fundamental to understanding instruction behavior:
+
+| Suffix | Full Name | Size | Example Instruction |
+|:------:|:----------|:------:|:-------------------|
+| b | byte | 1 byte (8 bits) | movb |
+| w | word | 2 bytes (16 bits) | movw |
+| l | long/double word | 4 bytes (32 bits) | movl |
+| q | quad word | 8 bytes (64 bits) | movq |
+
+### 2.1 Data Movement Instructions (mov)
+
+| Instruction | Effect |
+|:--------------|:--------|
+| movb | move byte |
+| movw | move word |
+| movl | move double word |
+| movq | move quad word |
+
+| Instruction | Effect |
+| :--- | :--- |
+| <span class="asm-inst">movb</span> | move byte |
+| <span class="asm-inst">movw</span> | move word |
+
+### 2.2 Special Transfer Instruction: movabsq
+
+When handling 64-bit immediate values, the standard movq may cause truncation (sign extension). In such cases, movabsq must be used:
+
+```asm
+; Incorrect: immediate is truncated to 32 bits and then sign-extended
+movq $0x0011223344556677, %rax  ; %rax = 0x0000000044556677 ❌
+
+; Correct: full 64-bit immediate transfer
+movabsq $0x0011223344556677, %rax ; %rax = 0x0011223344556677 ✓
+````
+
+---
+
+## III. x86-64 Register System
+
+### 3.1 Hierarchical Structure of General-Purpose Registers
+
+x86-64 registers support **partial access**, which is a key design for backward compatibility with 32/16/8-bit code:
+
+<img 
+src="/images/Computer_Organization/Registers1.png" 
+alt="Common x86-64 Registers" 
+className="w-full max-w-4xl mx-auto rounded-lg shadow-md my-8" 
+/>
+
+**Data Consistency of Registers**:
+As shown above, these registers of different sizes are physically nested accesses to the same underlying storage unit.
+
+**This means registers of the same type completely share their contents**:
+
+* Write synchronization: Writing to a lower-sized register (such as %eax) will also affect the corresponding 64-bit register (%rax).
+* Partial read: No matter which size alias you operate on, you are accessing the same data. If you write a 64-bit integer into %rax, you can later read its lower 32 bits through %eax or its lowest byte through %al.
+
+> In the x86-64 specification, writing to a 32-bit register (such as %eax) will automatically zero the upper 32 bits.
+
+### 3.2 Common Registers Overview
+
+|  64-bit  |   32-bit   |   16-bit   |    8-bit   | Usage                     |
+| :------: | :--------: | :--------: | :--------: | :------------------------ |
+|   %rax   |    %eax    |     %ax    |     %al    | Accumulator, return value |
+|   %rbx   |    %ebx    |     %bx    |     %bl    | Base register             |
+|   %rcx   |    %ecx    |     %cx    |     %cl    | Counter, loop variable    |
+|   %rdx   |    %edx    |     %dx    |     %dl    | Data register             |
+|   %rsi   |    %esi    |     %si    |    %sil    | Source index              |
+|   %rdi   |    %edi    |     %di    |    %dil    | Destination index         |
+| %r8-%r15 | %r8d-%r15d | %r8w-%r15w | %r8b-%r15b | Extended registers        |
+
+In functions, %rdi generally represents the first argument, %rsi the second argument, and %rcx often corresponds to the C-language index "i". <br />Note that these are 64-bit registers corresponding to the long type. If the parameter type is different, the corresponding register variant must be used. For example, if the parameter is int, use %edi and %esi.
+
+---
+
+## IV. Operand Addressing Modes
+
+x86-64 provides flexible addressing methods, which can be divided into three categories: **Immediate**, **Register**, and **Memory**. <br />Memory refers to the value stored at the address contained in a register, which may be a value or another address.
+
+### 4.1 Addressing Mode Quick Reference
+
+|         Type        | Form        | Operand Value              | Name                |
+| :-----------------: | :---------- | :------------------------- | :------------------ |
+|      Immediate      | $Imm        | $Imm$                      | Immediate           |
+|       Register      | ra          | $R[ra]$                    | Register            |
+|       Absolute      | Imm         | $M[Imm]$                   | Absolute            |
+|       Indirect      | (ra)        | $M[R[ra]]$                 | Indirect            |
+| Base + displacement | Imm(rb)     | $M[Imm + R[rb]]$           | Base + displacement |
+|       Indexed       | (rb, ri)    | $M[R[rb] + R[ri]]$         | Indexed             |
+|    Scaled indexed   | (rb, ri, s) | $M[R[rb] + R[ri] \cdot s]$ | Scaled indexed      |
+
+> 📝 **Scale factor s**: can only be 1, 2, 4, 8 (convenient for array element access)
+
+### 4.2 Address Calculation Example
+
+Assume the following register and memory state:
+
+| Address | Value | Register | Value |
+| :-----: | :---: | :------- | :---: |
+|  0x100  |  0xFF | %rax     | 0x100 |
+|  0x104  |  0xAB | %rcx     |  0x1  |
+|  0x108  |  0x13 | %rdx     |  0x3  |
+|  0x10C  |  0x11 | -        |   -   |
+
+Then the operand values are:
+
+| Operand         | Calculation          | Result |
+| :-------------- | :------------------- | :----: |
+| %rax            | R[%rax]              |  0x100 |
+| 0x104           | M[0x104]             |  0xAB  |
+| $0x108          | 0x108                |  0x108 |
+| (%rax)          | M[0x100]             |  0xFF  |
+| 4(%rax)         | M[0x100 + 4]         |  0xAB  |
+| 9(%rax, %rdx)   | M[0x100 + 0x3 + 9]   |  0x11  |
+| 260(%rcx, %rdx) | M[0x1 + 0x3 + 0x104] |  0x13  |
+| (%rax, %rdx, 4) | M[0x100 + 0x3 * 4]   |  0x11  |
+
+* Common scenario: %rdi is the array A in parameters, %rcx represents offset i
+
+  * Registers and addressing logic <br />%rdi = A (array base address/pointer) <br />%rcx = i (index/offset)
+
+  * Addressing mapping for different data types <br />int *A: (%rdi, %rcx, 4)  ->  A[i] <br />char *A: (%rdi, %rcx, 1) ->  A[i] <br />long *A: (%rdi, %rcx, 8) ->  A[i]
+
+---
+
+## V. Data Extension Transfer Instructions
+
+### 5.1 Zero Extension
+
+Extend smaller data to larger data, filling high bits with zero:
+
+| Instruction | Source | Destination | Effect                     |
+| :---------- | :----: | :---------: | :------------------------- |
+| movzbw      |  8-bit |    16-bit   | zero-extend to word        |
+| movzbl      |  8-bit |    32-bit   | zero-extend to double word |
+| movzbq      |  8-bit |    64-bit   | zero-extend to quad word   |
+| movzwl      | 16-bit |    32-bit   | zero-extend to double word |
+| movzwq      | 16-bit |    64-bit   | zero-extend to quad word   |
+
+* **Special equivalence**: movzlq %ecx, %rax is equivalent to movl %ecx, %eax, because a 32-bit move automatically zero-extends to 64 bits.
+
+### 5.2 Sign Extension
+
+Extend smaller data to larger data, copying the sign bit into higher bits:
+
+| Instruction | Source | Destination |                                     |
+| :---------- | :----: | :---------: | ----------------------------------- |
+| movsbw      |  8-bit |    16-bit   |                                     |
+| movsbl      |  8-bit |    32-bit   |                                     |
+| movsbq      |  8-bit |    64-bit   |                                     |
+| movswl      | 16-bit |    32-bit   |                                     |
+| movswq      | 16-bit |    64-bit   |                                     |
+| movslq      | 32-bit |    64-bit   |                                     |
+| cltq        |  %eax  |     %rax    | (abbreviation of movslq %eax, %rax) |
+
+* cltq = movslq %eax, %rax  =>  %rax = sign-extend(%eax)
+
+### 5.3 Extension Instruction Comparison Experiment
+
+```asm
+movq $0x0011223344556677, %rax     ; %rax = $0x0000000044556677 (only low 8 bytes modified)
+movabsq $0x0011223344556677, %rax  ; %rax = 0x0011223344556677
+movb    $0xAA, %dl                 ; %dl  = 0xAA (10101010)
+movb    %dl, %al                   ; %rax = 0x00112233445566AA (only lowest byte modified)
+movsbq  %dl, %rax                  ; %rax = 0xFFFFFFFFFFFFFFAA (sign-extended, 1-filled)
+movzbq  %dl, %rax                  ; %rax = 0x00000000000000AA (zero-extended, 0-filled)
+```
+
+---
+
+## VI. Stack Operations: Push and Pop
+
+In the x86-64 architecture, the stack is not merely a data structure; it is a hardware-encoded memory region maintained by the %rsp register. Its core logic lies in the reverse growth of addresses synchronized with pointer dereferencing.
+
+### 6.1 Core Concept: Counterintuitive “Downward Growth”
+
+The stack is a special region of memory used for temporarily storing data (such as local variables and saved register states).
+
+* Stack pointer: The %rsp register always stores the starting address of the current top element of the stack.
+* Downward growth: A push operation causes %rsp to move toward lower addresses. In other words, as more data is pushed, the numerical value in %rsp becomes smaller.
+* Operation unit: In x86-64 systems, the standard stack operation unit is a Quadword (8 bytes / 64 bits).
+
+### 6.2 Instruction Decomposition: Micro-Operation Equivalence
+
+push and pop are highly encapsulated instructions. Their execution flow can be decomposed into pointer arithmetic and memory access:
+
+* Push
+  Executing pushq %rax causes the CPU to perform:
+
+1. Pointer decrement: subtract 8 from %rsp (move downward by 8 bytes to allocate space).
+2. Memory write: store the data in %rax into the new address pointed to by %rsp.
+
+```asm
+pushq %rax is fully equivalent to:
+subq $8, %rsp       ; 1. stack pointer moves downward (address decreases)
+movq %rax, (%rsp)   ; 2. write data to new top address
+```
+
+* Pop
+  Executing popq %rax performs the reverse sequence:
+
+1. Memory read: copy the value pointed to by %rsp into %rax.
+2. Pointer increment: add 8 to %rsp (reclaim the 8-byte space).
+
+```asm
+popq %rax is fully equivalent to:
+movq (%rsp), %rax
+addq $8, %rsp
+```
+
+### 6.3 State Trace: Register and Memory Instantaneous States
+
+Below is a trace analysis assuming %rsp initially equals 0x8000:
+
+| Instruction       | %rax Value | %rsp (Stack Top Address) | Memory State                       | Description                                 |
+| ----------------- | ---------- | ------------------------ | ---------------------------------- | ------------------------------------------- |
+| movq $0x123, %rax | 0x123      | 0x8000                   | M[0x8000] = ?                      | Initialize register                         |
+| pushq %rax        | 0x123      | 0x7FF8                   | M[0x7FF8] = 0x123                  | Pointer moves down 8 bytes and writes       |
+| movq $0x22, %rax  | 0x22       | 0x7FF8                   | M[0x7FF8] = 0x123                  | Register overwritten, memory unchanged      |
+| pushq %rax        | 0x22       | 0x7FF0                   | M[0x7FF0] = 0x22                   | Pointer moves down again and writes         |
+| popq %rax         | 0x22       | 0x7FF8                   | M[0x7FF8] = 0x123、M[0x7FF0] = 0x22 | Data loaded into register, pointer restored |
+
+> Observe the last row popq %rax: <br />The pop operation only changes the %rsp pointer; it does not clear or erase old data in memory! <br />The 0x22 at address 0x7FF0 is not physically erased. Until overwritten by a future push, it is considered garbage data.
+
+---
+
+## VII. Common Errors and Notes
+
+### 7.1 Illegal Operand Combinations
+
+| Incorrect Instruction | Reason                                       | Correct Form                 |
+| :-------------------- | :------------------------------------------- | :--------------------------- |
+| movb $0xF, (%ebx)     | Cannot use %ebx (32-bit) as address register | movb $0xF, (%rbx)            |
+| movl %rax, (%rsp)     | Suffix l does not match 64-bit register rax  | movq %rax, (%rsp)            |
+| movw (%rax), 4(%rsp)  | Source and destination cannot both be memory | Use register as intermediary |
+| movb %al, %sl         | %sl register does not exist                  | movb %al, %sil               |
+| movq %rax, $0x123     | Immediate cannot be destination operand      | movq $0x123, %rax            |
+| movl %eax, %dx        | Destination operand size incorrect           | movl %eax, %edx              |
+| movb %si, 8(%rbp)     | Suffix b does not match 16-bit register si   | movw %si, 8(%rbp)            |
+
+### 7.2 Key Principles
+
+1. **mov is just a copy**: No persistent link is established between source and destination; it is only a value copy.
+2. **Memory-to-memory prohibited**: x86-64 does not allow a single instruction to directly transfer data between two memory locations.
+3. **Immediate constraints**: Immediate values cannot be destination operands, and their size is limited by the instruction suffix.
+
+---
+
+## VIII. Practice: C Code and Assembly Comparison
+
+### 8.1 Swap Function
+
+```c
+void swap(long *xp, long *yp) {
+    long t0 = *xp;
+    long t1 = *yp;
+    *xp = t1;
+    *yp = t0;
+}
+```
+
+Corresponding x86-64 assembly:
+
+```asm
+swap:
+    movq (%rdi), %rax    ; t0 = *xp (xp in %rdi)
+    movq (%rsi), %rdx    ; t1 = *yp (yp in %rsi)
+    movq %rdx, (%rdi)    ; *xp = t1
+    movq %rax, (%rsi)    ; *yp = t0
+    ret
+```
+
+**Execution trace**:
+
+* Initial: %rdi=0x120 (stores 123), %rsi=0x100 (stores 456)
+* After execution: 0x120 becomes 456, 0x100 becomes 123
+
+### 8.2 Array Addressing
+
+Assume long long array[8] base address is in %rdx and index 4 is in %rcx. <br />Goal: store array[4] into %rax
+
+```asm
+movq (%rdx, %rcx, 8), %rax
+# 1. Compute address %rdx + 4*8
+# 2. Move 8 bytes from that memory address into %rax
+```
+
+---
+
+## IX. Summary and Outlook
+
+Starting from the matrix implementation of main memory, this article systematically reviewed the following aspects of the x86-64 architecture:
+
+1. **Addressing system**: $2^{64}$ byte address space, byte-level addressing
+2. **Data formats**: b/w/l/q sizes with explicit instruction suffixes
+3. **Register design**: hierarchical partial access mechanism
+4. **Flexible addressing**: 9 memory addressing modes with scaled indexing
+5. **Data extension**: precise control of zero and sign extension
+6. **Stack mechanism**: push/pop operations growing toward lower addresses
+
+Understanding these low-level mechanisms forms a solid foundation for subsequent study of **arithmetic logic instructions**, **control flow**, **procedure calls**, and **memory hierarchy structures**. Main memory is not only a container for data but also the core interface between the CPU and software. Mastering its working principles is essential to truly understanding the complete picture of computer systems.
+
+---
+
+## References
+
+* "Computer Organization" course notes
+* *Computer Systems: A Programmer’s Perspective (CS:APP)*, Chapter 3
+* Intel 64 and IA-32 Architectures Software Developer's Manual
+
+---
+
+*Last updated: 2026-02-26*
+
+```

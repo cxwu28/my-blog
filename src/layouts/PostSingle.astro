@@ -174,4 +174,40 @@ const {
   .dark .content table th {
     border-color: #374151;
   }
+
+  /* 消除 Tailwind Typography 自动生成的引号 */
+  .content blockquote p::before,
+  .content blockquote p::after {
+    content: "" !important;
+  }
+
+  /* 兼容不同插件的特定样式 */
+  .content blockquote {
+    quotes: none !important;
+  } 
+
+  /* 针对文章正文中的内联代码 ` ` */
+  .content :not(pre) > code {
+    /* 浅色模式：灰底黑字 */
+    background-color: #f3f4f6 !important; /* 浅灰色背景 (Gray 100) */
+    color: #1f2937 !important;            /* 深灰色/黑色文字 (Gray 800) */
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9em;
+  }
+
+  /* 暗黑模式下的内联代码样式 */
+  .dark .content :not(pre) > code {
+    /* 深色模式：深灰底白字 */
+    background-color: #374151 !important; /* 深灰色背景 (Gray 700) */
+    color: #f9fafb !important;            /* 近纯白文字 (Gray 50) */
+  }
+
+  /* 移除自动生成的反引号（如果有的话） */
+  .content :not(pre) > code::before,
+  .content :not(pre) > code::after {
+    content: "" !important;
+  }
 </style>
+
