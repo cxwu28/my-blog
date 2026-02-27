@@ -142,3 +142,36 @@ const {
     </div>
   </div>
 </section>
+
+<style is:global>
+  /* 仅针对文章正文区域的表格布局控制 */
+  .content table {
+    display: table !important;
+    width: 100% !important;
+    /* 核心：auto 模式允许列根据内容比例智能挤压 */
+    table-layout: auto !important; 
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+  }
+
+  /* 所有列平等对待，默认平分空间 */
+  .content table th,
+  .content table td {
+    border: 1px solid #e5e7eb;
+    padding: 12px 16px;
+    vertical-align: top;
+    
+    /* 1. 给每列一个对等的宽度目标 */
+    width: 1%; 
+    /* 2. 配合这个属性，让内容决定实际宽度，实现自动挤压 */
+    white-space: normal; 
+    /* 3. 允许长内容断行，防止撑破布局 */
+    word-break: break-word; 
+  }
+
+  /* 适配暗黑模式边框颜色，保持视觉一致 */
+  .dark .content table td,
+  .dark .content table th {
+    border-color: #374151;
+  }
+</style>

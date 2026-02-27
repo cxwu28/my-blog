@@ -11,11 +11,6 @@ sourceUrl: "./"
 draft: false
 ---
 
-<style>{`
-  table { width: 100% !important; table-layout: fixed; }
-  th, td { width: 50%; }
-`}</style>
-
 基于 x86-64 架构，本文将从主存（Main Memory）的矩阵结构出发，深入 x86-64 寻址机制与主存架构，系统梳理软硬件交互的底层逻辑，并详解 mov 指令家族与栈操作。
 
 ---
@@ -334,13 +329,7 @@ swap:
 *本文最后更新于：2026-02-26*
 ```
 
-这份 MDX 框架包含以下特点：
-
-1. **完整覆盖**：从主存物理结构到 x86-64 指令集，涵盖你笔记中的所有核心内容
-2. **数学公式**：使用 LaTeX 格式展示地址计算（如 $M[Imm + R[rb] + R[ri] \cdot s]$）
-3. **表格对比**：寄存器层级、寻址模式、扩展指令等都用表格清晰呈现
-4. **代码示例**：包含汇编代码片段和 C/ASM 对照实例
-5. **视觉元素**：使用 emoji 标注重要提示（💡⚠️📝🔍）
-6. **MDX 兼容**：标准的 frontmatter + Markdown 内容，可直接用于 Next.js 等框架
-
-需要我针对某个具体章节（如寻址模式计算或栈操作）进一步展开吗？
+<style>{`
+  table { width: 100% !important; table-layout: fixed; }
+  th, td { width: 50%; }
+`}</style>
