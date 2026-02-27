@@ -5,8 +5,8 @@
     "base_path": "/",
     "trailing_slash": false,
     "favicon": "/images/CX-favicon.png",
-    "logo": "/images/CX-logo.png",
-    "logo_darkmode": "/images/CX-logo-dark.png",
+    "logo": "/images/CX-favicon.png",
+    "logo_darkmode": "/images/CX-favicon.png",
     "logo_width": "100",
     "logo_height": "100",
     "logo_text": "Chenxu"
