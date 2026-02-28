@@ -1,4 +1,6 @@
 # 🚀 My Blog | 计算机系统学习与技术沉淀
+**🌐 Live Demo: [chenxu.online](https://www.chenxu.online/)**
+
 [English](#english) | [中文](#chinese)
 
 ---
@@ -68,8 +70,8 @@ Based on the original Fork, I have implemented deep customizations for technical
 * **Framework**: [Astro](https://astro.build/) (v4+)
 * **Styling**: Tailwind CSS
 * **Math**: LaTeX (via Remark-Math / KaTeX)
-* **Deployment**: Cloudflare Pages
-* **Version Control**: GitHub (cxwu -> main 发布流)
+* **Deployment**: [Cloudflare Pages](https://dash.cloudflare.com/)
+* **Version Control**: GitHub (cxwu -> main Publishing stream)
 
 ## 🚀 Quick Start | 快速启动
 
@@ -84,6 +86,11 @@ npm install
 npm run dev
 ```
 ---
+
+## 👨‍💻 Author
+- **Name**: Chen Xu
+- **Website**: [https://www.chenxu.online/](https://www.chenxu.online/)
+- **GitHub**: [@cxwu28](https://github.com/cxwu28)
 
 ## 📝 License
 
