@@ -1,0 +1,228 @@
+---
+title: "Computing Systems: Storage Technologies and Memory Abstraction - The Hierarchical Architecture from DRAM to Cache"
+meta_title: "x86-64 Memory Hierarchy & Caches"
+description: "A comprehensive analysis of the memory hierarchy, covering memory read/write transactions, underlying principles of SRAM and DRAM, locality of reference, and detailed cache organization and write strategies."
+date: 2026-02-28T10:00:00Z
+image: "/images/Computer_Organization/CO.png"
+categories: ["Computing Systems"]
+tags: ["x86-64", "ASM", "Memory Management", "CSAPP"]
+sourceName: "Blog"
+sourceUrl: "./"
+draft: false
+---
+
+System performance is often limited by the speed of data movement. Starting from the core concept of **Memory Abstraction**, this article explores the logic of read/write transactions between the CPU and main memory. By comparing the circuit implementations of **SRAM** and **DRAM**, we reveal the design trade-offs of caches and main memory. Furthermore, we delve into how the **Principle of Locality** drives the design of the **Memory Hierarchy** and break down cache organization, mapping methods, and complex write strategies to lay the foundation for modern system performance optimization.
+
+---
+
+## 1. The memory abstraction
+
+The memory system can be viewed as a giant linear array of bytes, which the CPU interacts with via a bus.
+
+### 1.1 Write and reading memory
+
+- **Write (Store)**: Transfer data from CPU registers to a specified memory address.
+  - `Store` operation
+  - Instruction example: `movq %rax, Address`
+- **Read (Load)**: Transfer data from a memory address to CPU registers.
+  - `Load` operation
+  - Instruction example: `movq Address, %rax`
+
+### 1.2 Memory write transaction
+
+In a write transaction, the CPU places the address on the bus, followed by the data word. Main memory reads the address and data, then stores them in the appropriate cell.
+
+<img 
+  src="/images/Computer_Organization/Memory write transaction.png" 
+  alt="Memory write transaction" 
+  className="w-full max-w-2xl mx-auto rounded-lg shadow-md my-8" 
+/>
+
+---
+
+## 2. RAM: main memory building block
+
+Random Access Memory (RAM) is the foundation of main memory, with the smallest storage unit being a **cell** that stores one bit.
+
+### 2.1 SRAM & DRAM
+
+| Characteristic | SRAM (Static RAM) | DRAM (Dynamic RAM) |
+| :--- | :--- | :--- |
+| **Circuitry** | 6 transistors (Bistable) | 1 transistor + 1 capacitor |
+| **Access Time** | Fast (1x) | Slow (10x) |
+| **Cost** | High (100x) | Low (1x) |
+| **Refresh?** | No | Yes (Charge leaks over time) |
+| **Applications** | Caches (L1/L2/L3 Cache) | Main memory, Frame buffers |
+
+### 2.2 Conventional DRAM organization
+
+DRAM chips are organized as a 2D grid of $d \times w$ **supercells**.
+
+- **Organization**:
+  - A $d \times w$ DRAM contains $d \times w$ total bits, organized into $d$ supercells of size $w$ bits.
+- **Reading Process**: Uses a row/column strobe mechanism.
+  1. **RAS (Row Access Strobe)**: Selects a specific row and copies it to the row buffer.
+  2. **CAS (Column Access Strobe)**: Selects a specific supercell from the row buffer to send to the CPU.
+
+
+
+### 2.3 Example: Reading a 16x8 DRAM chip
+Assume a $16 \times 8$ DRAM chip (128 bits total), organized as a 4x4 array. The process of reading supercell $(2, 1)$ is as follows:
+- **Step 1(a): Row Access Strobe (RAS)**: CPU sends row address 2; the RAS signal is activated, selecting Row 2.
+- **Step 1(b): Row Buffer Copy**: The entire Row 2 is copied from the DRAM array to an internal **Row Buffer**.
+- **Step 2(a): Column Access Strobe (CAS)**: CPU sends column address 1; the CAS signal is activated, selecting the supercell at Column 1 in the row buffer.
+- **Step 2(b): Data Transfer**: Supercell $(2, 1)$ is copied from the buffer to data lines and eventually back to the CPU.
+
+<img 
+  src="/images/Computer_Organization/3.2.3example.png" 
+  alt="Reading a 16x8 DRAM chip" 
+  className="w-full max-w-2xl mx-auto rounded-lg shadow-md my-8" 
+/>
+
+
+---
+
+## 3. Storage Technology (Disk)
+
+### 3.1 Disk Geometry
+Disks use magnetic surfaces to store data. Physical construction includes:
+
+- **Platter**: The physical magnetic disk.
+- **Surface**: Two surfaces per platter (top and bottom).
+- **Cylinder**: The collection of tracks at the same radius across all surfaces.
+- **Sector**: Fixed-size segments of a track.
+
+### 3.2 Recording Density and Capacity
+
+- **Recording density (bits/in)**: Number of bits squeezed into a 1-inch segment of a track.
+- **Track density (tracks/in)**: Number of tracks squeezed into a 1-inch radial segment.
+- **Areal density (bits/in²)**: Product of recording and track density.
+
+**Capacity Formula:**
+$$Capacity = \text{sector size} \times \text{avg sectors/track} \times \text{cylinders} \times \text{platters} \times 2(\text{Surfaces})$$
+
+### 3.3 Access Time Model
+
+Disk access time is dominated by mechanical movement:
+$$T_{access} = T_{avg\ seek} + T_{avg\ rotation} + T_{avg\ transfer}$$
+
+- **Average seek time ($T_{avg\ seek}$)**:
+  Time to move the arm to the target track.
+  - Formula: $T_{avg\ seek} = m \cdot n + s$ (where $s$ is start time, $m$ is travel constant, $n$ is tracks traversed).
+- **Average rotation latency ($T_{avg\ rotation}$)**:
+  Time waiting for the target sector to rotate under the head.
+  - Formula: $T_{avg\ rotation} = \frac{1}{2r} = \frac{0.5}{RPM/60} = \frac{30}{RPM}$ (where $r$ is rotation rate in $1/s$).
+- **Average transfer time ($T_{avg\ transfer}$)**:
+  Time to read bits in a sector.
+  - Formula: $T_{avg\ transfer} = \frac{1}{rN}$ (where $N$ is sectors per track).
+- **Data transfer time ($T_{transfer}$)**:
+  - Formula: $T_{transfer} = \frac{b}{rNs}$ (where $b$ is data size, $s$ is sector size).
+
+### 3.4 Example
+Assume the following disk parameters:
+- **Rotational rate**: 7,200 RPM
+- **Average seek time**: 9 ms
+- **Avg # sectors/track**: 400
+
+**Calculation:**
+1. **Avg rotation latency**:
+   $$T_{avg\ rotation} = 0.5 \times \frac{60}{7200} \times 1000 = 4\ ms$$
+2. **Avg transfer time**:
+   $$T_{avg\ transfer} = 1 \times \frac{60}{7200} \div 400 \times 1000 = 0.02\ ms$$
+3. **Total access time**:
+   $$T_{access} = 9 + 4 + 0.02 = 13.02\ ms$$
+
+---
+
+## 4. Locality of Reference
+
+### 4.1 What is Locality?
+
+- **Principle of Locality**: Many programs tend to use data and instructions with addresses near or equal to those they have used recently.
+- **Temporal Locality**: Recently referenced items are likely to be referenced again in the near future.
+- **Spatial Locality**: Items with nearby addresses tend to be referenced close together in time.
+
+### 4.2 Example 1: Basic Loop Analysis
+
+```c
+sum = 0;
+for (i = 0; i < n; i++) {
+    sum += a[i];
+}
+return sum;
+```
+- Data references
+  - Array access: Reference elements in succession (Spatial locality).
+  - Variable `sum` : Referenced each iteration (Temporal locality).
+
+- Instruction references
+  - Sequential execution: Instructions in sequence (Spatial locality).
+  - Loop execution: Cycle through loop repeatedly (Temporal locality).
+  - 
+### 4.3 Example 2: 2D Arrays
+
+```c
+int sum_array_cols (int a[M][N]) {
+    int i, j, sum = 0;
+    for (j = 0; j < N; j++) {
+        for (i = 0; i < M; i++) {
+            sum += a[i][j];
+        }
+    }
+    return sum;
+}
+```
+- Locality Evaluation:
+  - Conclusion: This function has very poor locality for array `a` .
+  - Reason: In C, 2D arrays are stored in **Row-major order**.
+  - Analysis: The outer loop is column `j` and the inner loop is row `i`. The program jumps an entire row in memory for each inner iteration rather than moving sequentially.
+
+---
+
+## 5. The Memory Hierarchy
+
+The memory hierarchy bridges the massive gap between CPU speeds and external storage speeds by establishing caching relationships between storage devices of varying speeds.
+
+### 5.1 Data Transfer Between Levels
+
+Within the hierarchy, the unit of data exchange (block size) differs between adjacent levels:
+
+<img 
+  src="/images/Computer_Organization/Memory_Hierarchy.png" 
+  alt="Memory Hierarchy" 
+  className="w-full max-w-2xl mx-auto rounded-lg shadow-md my-8" 
+/>
+
+- **L0: CPU Registers $\leftrightarrow$ L1 Cache**
+    - Transfer Unit: **Words**, typically 4-8 bytes.
+- **L1/L2/L3 Cache (SRAM) $\leftrightarrow$ L4 Main Memory (DRAM)**
+    - Transfer Unit: **Cache lines**, typically 64-byte blocks.
+- **L4 Main Memory (DRAM) $\leftrightarrow$ L5 Local Secondary Storage (Local Disk)**
+    - Transfer Unit: **Disk blocks**, typically 4 KB pages.
+
+### 5.2 Caches
+
+#### Definition and Core Concept
+- **Definition**: A cache is a smaller, faster storage device that acts as a **staging area** for a subset of the data in a larger, slower device.
+- **Fundamental Idea**: A level $k$ device serves as a cache for the level $k+1$ device.
+
+#### Why is the Memory Hierarchy Effective?
+- **Locality of Reference**: Programs tend to access data at level $k$ much more frequently than they access data at level $k+1$.
+- **Cost Advantage**: Because level $k+1$ is accessed less frequently, it can be designed with slower technology, allowing for larger capacity and a lower cost per bit.
+
+#### The Ultimate Goal (Ideal State)
+The memory hierarchy attempts to fuse two conflicting advantages:
+- **Capacity & Cost**: Achieving the massive capacity and low price points of bottom-tier cheap storage.
+- **Access Speed**: Achieving the extreme data transfer rates of top-tier fast storage.
+
+---
+
+## References
+
+- "Computer Organization" Course Notes
+- "Computer Systems: A Programmer's Perspective" (CS:APP) Chapter 3
+- Intel 64 and IA-32 Architectures Software Developer's Manual
+
+---
+
+*Last Updated: 2026-02-28*

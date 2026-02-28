@@ -1,0 +1,238 @@
+---
+title: "计算机系统：存储技术与内存抽象 - 从 DRAM 到高速缓存的层次化架构"
+meta_title: "x86-64 Memory Hierarchy & Caches"
+description: "全面解析计算机系统的存储层级，涵盖内存读写事务、SRAM 与 DRAM 的底层原理、局部性原理以及高速缓存（Cache）的详细组织结构与写策略。"
+date: 2026-02-29T10:00:00Z
+image: "/images/Computer_Organization/CO.png"
+categories: ["Computing Systems"]
+tags: ["x86-64", "ASM", "Memory Management", "CSAPP"]
+sourceName: "Blog"
+sourceUrl: "./"
+draft: false
+---
+
+计算机系统的性能往往受限于数据的移动速度。本文从**内存抽象（Memory Abstraction** 的核心概念出发，详细探讨了 CPU 与主存之间的读写事务处理逻辑。我们将通过对比 **SRAM** 与 **DRAM** 的电路实现，揭示高速缓存与主存的设计权衡。此外，文章深入探讨了**局部性原理（Locality of Reference）**如何驱动**存储层级结构（Memory Hierarchy）**的设计，并详细拆解了高速缓存的组织架构、映射方式以及复杂的写策略，为理解现代系统性能优化奠定基础。
+
+---
+
+## 1. The memory abstraction
+
+内存系统可以被看作一个巨大的线性字节数组，CPU 通过总线与其进行交互。
+
+### 1.1 Write and reading memory
+
+- Write (Store): 将数据从 CPU 寄存器传输到指定的内存地址。
+  - `Store` operation
+  - 指令示例: `movq %rax, Address`
+- Read (Load): 将数据从内存地址提取到 CPU 寄存器。
+  - `Load` operation
+  - 指令示例: `movq Address, %rax`
+
+### 1.2 Memory write transaction
+
+在写事务中，CPU 将地址放在总线上，随后将数据字放在数据总线上，主存读取地址和数据并将其存储在相应的单元中。
+
+<img 
+  src="/images/Computer_Organization/Memory write transaction.png" 
+  alt="内存写入" 
+  className="w-full max-w-2xl mx-auto rounded-lg shadow-md my-8" 
+/>
+
+---
+
+## 2. RAM: main memory building block
+
+随机存取存储器（RAM）是构建主存的基础，其最小存储单位是存储一个比特位的单元（cell）。
+
+### 2.1 SRAM & DRAM
+
+| 特性 | SRAM (静态 RAM) | DRAM (动态 RAM) |
+| :--- | :--- | :--- |
+| **电路结构** | 6 个晶体管 (双稳态) | 1 个晶体管 + 1 个电容器 |
+| **存取时间** | 快 (1x) | 慢 (10x) |
+| **成本** | 高 (100x) | 低 (1x) |
+| **刷新需求** | 不需要 | 需要 (电荷会随时间流失) |
+| **典型应用** | 高速缓存 (L1/L2/L3 Cache) | 主存、图形显存 |
+
+### 2.2 传统 DRAM 组织
+
+DRAM 芯片被组织成 $d \times w$ 的超单元（supercells）二维网格。
+
+- 组织结构
+  - 规格定义：一个 $d \times w$ 的 DRAM 总共包含 $d \times w$ 位数据，这些数据被组织为 $d$ 个超单元，每个超单元的大小为 $w$ 位。
+
+- 读取过程: 采用行列选通机制。
+    1. **RAS (Row Access Strobe):** 选择特定行并将其拷贝到行缓冲区。
+    2. **CAS (Column Access Strobe):** 从行缓冲区中选择特定列的超单元发送至 CPU。
+
+### 2.3 访问实例：读取 16×8 DRAM 芯片
+假设我们有一个 $16 \times 8$ 的 DRAM 芯片（共 128 位），阵列组织为 4 行 4 列。 下面是读取坐标为 $(2, 1)$ 的超单元的详细过程：
+- 步骤 1(a)：行访问选通 (RAS)CPU 发送行地址 2，行访问选通信号（Row Access Strobe, RAS）被激活，选中阵列中的第 2 行。
+- 步骤 1(b)：行缓冲复制 (Row Buffer Copy)整行（第 2 行的所有超单元）被从 DRAM 阵列复制到一个内部的**行缓冲区（Row Buffer）**中。
+- 步骤 2(a)：列访问选通 (CAS)CPU 发送列地址 1，列访问选通信号（Column Access Strobe, CAS）被激活，从行缓冲区中选中第 1 列对应的超单元。
+- 步骤 2(b)：数据传输 (Data Transfer)选中的超单元 $(2, 1)$ 从缓冲区复制到数据线，最终传输回 CPU
+
+<img 
+  src="/images/Computer_Organization/3.2.3example.png" 
+  alt="读取芯片图示" 
+  className="w-full max-w-2xl mx-auto rounded-lg shadow-md my-8" 
+/>
+
+---
+
+## 3. 存储技术（磁盘）
+
+### 3.1 磁盘几何结构
+磁盘利用磁性表面存储数据，其物理构造包含以下核心概念：
+
+* **盘片 (Platter)**：涂有磁性材料的物理圆盘。
+* **盘面 (Surface)**：每个盘片有两个盘面（正面和背面）。
+* **柱面 (Cylinder)**：所有盘面上半径相同的磁道集合（即每个盘面上的磁道数）。
+* **扇区 (Sector)**：磁道上的固定大小分段。
+
+### 3.2 磁盘密度与容量计算
+
+* **记录密度 (Recording density)**：位/英寸 (bits/in)，指磁道 1 英寸段内挤入的比特数。
+* **磁道密度 (Track density)**：磁道/英寸 (tracks/in)，指 1 英寸径向段内挤入的磁道数。
+* **面密度 (Areal density)**：位/平方英寸 (bits/in²)，记录密度与磁道密度的乘积。
+
+**容量计算公式：**
+$$容量 = 扇区大小 \times 平均每磁道扇区数 \times 柱面数 \times 盘片数 \times 2(盘面)$$
+
+### 3.3 访问时间模型: 
+
+访问磁盘的时间主要受限于机械运动，公式如下：
+$$T_{access} = T_{avg\ seek} + T_{avg\ rotation} + T_{avg\ transfer}$$
+
+- 平均寻道时间 $(T_{avg\ seek})$：
+将磁臂移动到目标磁道所需的时间。
+  - 公式：$T_{avg\ seek} = m \cdot n + s$
+  - 其中 $s$ 为启动时间，$m$ 为移动常数，$n$ 为穿越的磁道数。
+  - _一般会直接给出_
+
+- 平均旋转延迟 $(T_{avg\ rotation})$：
+等待目标扇区旋转到磁头下方的时间。
+   - 公式：$T_{avg\ rotation} = \frac{1}{2r} = \frac{0.5}{RPM/60} = \frac{30}{RPM}$
+   - 其中 $r$ 为旋转速率（单位 $1/s$），$RPM$ 为每分钟转数。
+
+- 平均传输时间 $(T_{avg\ transfer})$
+读取扇区中比特的时间。
+   - 公式：$T_{avg\ transfer} = \frac{1}{rN}$
+   - 其中 $N$ 为每条磁道的扇区数。
+
+- 数据传输时间： $(T_{transfer})$
+  - 公式：$T_{transfer} = \frac{data}{rNs}$
+  - 其中 $data$ 为传输数据大小，$s$ 为扇区大小。
+
+### 3.4 实例
+假设某磁盘参数如下：
+* **旋转速率**：7,200 RPM
+* **平均寻道时间**：9 ms
+* **平均每磁道扇区数**：400
+
+**计算过程：**
+1.  **平均旋转延迟**：
+    $$T_{avg\ rotation} = 0.5 \times \frac{60}{7200} \times 1000 = 4\ ms$$
+2.  **平均传输时间**：
+    $$T_{avg\ transfer} = 1 \times \frac{60}{7200} \div 400 \times 1000 = 0.02\ ms$$
+3.  **总访问时间**：
+    $$T_{access} = 9 + 4 + 0.02 = 13.02\ ms$$
+
+---
+
+## 4. 局部性原理
+
+### 4.1 什么是局部性
+
+- **局部性原理 (Principle of Locality)**：许多计算机程序倾向于使用与最近使用过的地址接近或相同的地址。这意味着程序在运行期间，对指令和数据的访问并不是随机的，而是呈现出某种聚集性。
+- **时间局部性 (Temporal Locality)**：被引用过一次的内存位置很可能在不远的将来再次被引用。
+- **空间局部性 (Spatial Locality)**：如果一个内存位置被引用了，那么其附近的内存位置很可能在不远的将来被引用。
+
+### 4.2 示例1：基础循环分析
+
+观察以下累加数组元素的 C 语言片段：
+
+```c
+sum = 0;
+for (i = 0; i < n; i++) {
+    sum += a[i];
+}
+return sum;
+```
+- 数据引用 (Data references)
+  - 数组元素访问：按顺序引用数组元素，展现出**空间局部性**。
+  - 变量 sum 访问：在每次迭代中都会引用变量 sum，展现出**时间局部性**。
+
+- 指令引用 (Instruction references)
+  - 顺序执行：按顺序执行循环体内的指令，展现出**空间局部性**。
+  - 循环执行：重复循环多次，展现出**时间局部性**。
+
+### 4.3 示例2：二维数组
+
+观察以下累加数组元素的 C 语言片段：
+
+```c
+int sum_array_cols (int a[M][N]) {
+    int i, j, sum = 0;
+    for (j = 0; j < N; j++) {
+        for (i = 0; i < M; i++) {
+            sum += a[i][j];
+        }
+    }
+    return sum;
+}
+```
+- 局部性评估
+  - 结论：该函数对于数组 `a` 的局部性非常差。
+  - 原因：在 C 语言中，二维数组是按行存储 (Row-major order) 的。
+  - 分析：上述代码的外层循环是列 `j` ，内层循环是行 `i` 。这意味着程序在内存中并不是连续跳转，而是每次内层循环都会跳过一整行来寻找下一个元素。
+
+---
+
+## 5. 存储器层级结构
+
+存储器层级结构通过在不同速度的存储设备间建立缓存关系，弥补了 CPU 速度与外存速度之间的巨大鸿沟。
+
+### 5.1 各层级间的数据传输
+
+在层级结构中，相邻层级之间交换数据的单位（块大小）各不相同：
+
+<img 
+  src="/images/Computer_Organization/Memory_Hierarchy.png" 
+  alt="存储器层级结构" 
+  className="w-full max-w-2xl mx-auto rounded-lg shadow-md my-8" 
+/>
+
+- **L0: CPU 寄存器 $\leftrightarrow$ L1 高速缓存**
+    - 传输单位：**字 (Words)**，通常为 4-8 字节。
+- **L1/L2/L3 高速缓存 (SRAM) $\leftrightarrow$ L4 主存 (DRAM)**
+    - 传输单位：**高速缓存行 (Cache lines)**，通常为 64 字节的块。
+- **L4 主存 (DRAM) $\leftrightarrow$ L5 本地二级存储 (本地磁盘)**
+    - 传输单位：**磁盘块 (Disk blocks)**，通常为 4 KB 的页。
+
+### 5.2 高速缓存 (Caches)
+
+#### 定义与核心思想
+- **定义**：高速缓存是一种小而快的存储设备，作为更大、更慢设备中数据子集的**暂存区域 (Staging area)**。
+- **核心思想**：第 $k$ 层设备充当第 $k+1$ 层设备的缓存。
+
+#### 为什么存储器层级结构有效？
+- **局部性原理 (Locality)**：由于程序访问第 $k$ 层数据的频率远高于第 $k+1$ 层。
+- **成本优势**：因此，第 $k+1$ 层的存储设备可以设计得更慢，从而实现更大的容量和更低的每比特成本。
+
+#### 终极目标 (理想状态)
+存储器层级结构试图融合两种矛盾的优势：
+- **容量与成本**：获得接近底层廉价存储设备的巨大容量和低廉价格。
+- **访问速度**：获得接近顶层高速存储设备的极致数据传输速率。
+
+---
+
+## 参考资源
+
+- 《Computer Organization》课程笔记
+- 《深入理解计算机系统》（CS:APP）第 3 章
+- Intel 64 and IA-32 Architectures Software Developer's Manual
+
+---
+
+*本文最后更新于：2026-02-29*
