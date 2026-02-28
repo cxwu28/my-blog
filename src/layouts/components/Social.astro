@@ -20,8 +20,8 @@ export interface ISocial {
           rel="noopener noreferrer nofollow"
         >
           <span class="sr-only">{social.name}</span>
-          {/* <Icon name={social.icon} class="w-24 h-24"/> */}
-          {/* 核心逻辑：判断是否为本地路径 */}
+          
+          {/* Core logic: Determine if the icon is a local path or library name */}
           {social.icon.startsWith("/") ? (
             <img 
               src={social.icon} 
@@ -32,7 +32,6 @@ export interface ISocial {
           ) : (
             <Icon name={social.icon} class="w-24 h-24"/>
           )}
-          {/* <DynamicIcon className="inline-block" icon={social.icon} /> */}
         </a>
       </li>
     ))
