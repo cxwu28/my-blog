@@ -22,7 +22,7 @@ features:
     button:
       enable: true
       label: "View Education"
-      link: "https://www.gtiit.edu.cn/viewColleges.aspx?flowNo=1087"
+      link: "./en/about/#education"
 
   - title: "Technical Skills"
     image: "/images/service-2.png"

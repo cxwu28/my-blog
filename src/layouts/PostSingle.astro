@@ -67,12 +67,17 @@ const {
            
           {sourceName && sourceUrl && (
             <li class="mr-4 inline-block">
-              {sourceLabel}:
-              <a href={sourceUrl}>
+              <FaRegUserCircle className={"mr-2 -mt-1 inline-block"} /> {sourceLabel}:
+              <a 
+                href={sourceUrl}
+                target={sourceUrl.startsWith('http') ? "_blank" : "_self"}
+                rel={sourceUrl.startsWith('http') ? "noopener noreferrer" : undefined}
+                class="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              >
                 {sourceName}
               </a>
             </li>
-          )}
+          )}    
 
           <li class="mr-4 inline-block">
             <FaRegFolder className={"mr-2 -mt-1 inline-block"} />
@@ -80,9 +85,10 @@ const {
               categories.map((category: string, index: number) => (
                 <a
                   href={slugSelector(`/categories/${slugify(category)}`, lang)}
+                  class="text-blue-600 dark:text-blue-400 hover:underline font-medium"
                 >
                   {humanize(category)}
-                  {index !== categories.length - 1 && ","}
+                  {index !== categories.length - 1 && <span class="mr-1">,</span>}
                 </a>
               ))
             }

@@ -5,7 +5,8 @@
       {
         "name": "Python",
         "icon": "devicon:python"
-      },{
+      },
+      {
         "name": "Java",
         "icon": "devicon:java"
       },
@@ -30,7 +31,6 @@
   {
     "catalog": "Tools",
     "skills": [
-
       {
         "name": "VSCode",
         "icon": "devicon:vscode"
@@ -48,6 +48,19 @@
         "icon": "devicon:anaconda"
       },
       {
+        "name": "git",
+        "icon": "devicon:git"
+      },
+      {
+        "name": "npm",
+        "icon": "devicon:npm"
+      }
+    ]
+  },
+  {
+    "catalog": "Platforms",
+    "skills": [
+      {
         "name": "github",
         "icon": "devicon:github"
       },
@@ -62,18 +75,6 @@
       {
         "name": "Leetcode",
         "icon": "devicon:leetcode"
-      },
-      {
-        "name": "git",
-        "icon": "devicon:git"
-      },
-      {
-        "name": "npm",
-        "icon": "devicon:npm"
-      },
-      {
-        "name": "pypi",
-        "icon": "devicon:pypi"
       },
       {
         "name": "CloudFlare",
